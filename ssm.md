@@ -59,8 +59,6 @@ Permissions:
 Trust policy allows assume role only by DevOps group.
 
 
-```
-
 ---
 
 ### DeveloperRole
@@ -72,26 +70,7 @@ Permissions:
 - No sudo privileges
 
 Trust policy allows assume role only by Developer group.
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": "sts:AssumeRole",
-            "Resource": "arn:aws:iam::101936531064:role/DeveloperRole"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "ssm:StartSession",
-            "Resource": [
-                "arn:aws:ssm:*:*:document/SSM-RunAs-dev1",
-                "arn:aws:ec2:*:*:instance/*"
-            ]
-        }
-    ]
-}
-```
+
 ---
 
 ## 🔐 IAM Policies
@@ -100,14 +79,39 @@ Trust policy allows assume role only by Developer group.
 
 DevOps Group Policy:
 
-```json
+```
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "sts:AssumeRole",
-      "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/DevOpsRole"
-    }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/DevOpsRole",
+            "Condition": {
+                "StringEquals": {
+                    "sts:RoleSessionName": "${aws:username}"
+                }
+            }
+        }
+    ]
 }
+```
+Developer Group Policy:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/DeveloperRole",
+            "Condition": {
+                "StringEquals": {
+                    "sts:RoleSessionName": "${aws:username}"
+                }
+            }
+        }
+    ]
+}
+```
