@@ -224,7 +224,10 @@ Script Path:
 
 sudo nano /usr/local/bin/dynamic-ssm-user.sh
 
-add this and make it executable 
+add this and make it executable by using command 
+```
+ sudo chmod +x /usr/local/bin/dynamic-ssm-user.sh
+ ```
 
 ```
 #!/bin/bash
@@ -305,3 +308,24 @@ fi
 
 exit 0
 ```
+
+## 📄 Custom SSM Document Creation
+
+Create custom SSM document:
+
+Name:ssm-user
+
+```
+{
+  "schemaVersion": "1.0",
+  "description": "Auto create and switch to IAM user on session start",
+  "sessionType": "Standard_Stream",
+  "inputs": {
+    "runAsEnabled": false,
+    "shellProfile": {
+      "linux": "/usr/local/bin/dynamic-ssm-user.sh"
+    }
+  }
+}
+```
+
