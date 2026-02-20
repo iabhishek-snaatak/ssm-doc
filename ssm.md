@@ -58,6 +58,55 @@ Permissions:
 
 Trust policy allows assume role only by DevOps group.
 
+```
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ec2:DescribeInstances",
+				"ec2:DescribeInstanceStatus",
+				"ssm:DescribeInstanceInformation",
+				"ssm:DescribeInstanceProperties",
+				"ssm:DescribeSessions",
+				"ssm:GetConnectionStatus"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": "ssm:StartSession",
+			"Resource": "arn:aws:ec2:ap-south-1:101936531064:instance/*",
+			"Condition": {
+				"StringEquals": {
+					"ssm:resourceTag/Access": "abhishek"
+				}
+			}
+		},
+		{
+			"Effect": "Allow",
+			"Action": "ssm:StartSession",
+			"Resource": [
+				"arn:aws:ssm:ap-south-1::document/SSM-SessionManagerRunShell",
+				"arn:aws:ssm:ap-south-1:101936531064:document/SSM-DevOps-Session",
+				"arn:aws:ssm:ap-south-1:101936531064:document/user",
+				"arn:aws:ssm:ap-south-1:101936531064:document/Dynamic-Role-Based-SSM-",
+				"arn:aws:ssm:ap-south-1:101936531064:document/user2"
+			]
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ssm:TerminateSession",
+				"ssm:ResumeSession"
+			],
+			"Resource": "arn:aws:ssm:ap-south-1:101936531064:session/${aws:username}-*"
+		}
+	]
+}
+```
+
 
 ---
 
@@ -71,6 +120,54 @@ Permissions:
 
 Trust policy allows assume role only by Developer group.
 
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus",
+                "ssm:DescribeInstanceInformation",
+                "ssm:DescribeInstanceProperties",
+                "ssm:DescribeSessions",
+                "ssm:GetConnectionStatus"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ssm:StartSession",
+            "Resource": "arn:aws:ec2:ap-south-1:101936531064:instance/*",
+            "Condition": {
+                "StringEquals": {
+                    "ssm:resourceTag/Access": "abhishek"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ssm:StartSession",
+            "Resource": [
+                "arn:aws:ssm:ap-south-1::document/SSM-SessionManagerRunShell",
+                "arn:aws:ssm:ap-south-1:101936531064:document/SSM-Developer-Session",
+                "arn:aws:ssm:ap-south-1:101936531064:document/user2",
+                "arn:aws:ssm:ap-south-1:101936531064:document/test"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:TerminateSession",
+                "ssm:ResumeSession"
+            ],
+            "Resource": "arn:aws:ssm:ap-south-1:101936531064:session/${aws:username}-*"
+        }
+    ]
+}
+
+```
 ---
 
 ## 🔐 IAM Policies
