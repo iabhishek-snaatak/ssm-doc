@@ -406,6 +406,9 @@ fi
 exit 0
 ```
 
+### Give Execute Permission
+ sudo chmod +x /usr/local/bin/dynamic-ssm-user.sh
+
 ## 📄 Custom SSM Document Creation
 
 Create custom SSM document:
