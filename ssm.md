@@ -116,6 +116,7 @@ Developer Group Policy:
 }
 ```
 Policy 2: SSM Session Access (Attach to Roles) on EC2
+This enables SSM access to EC2.And fetch instance,role session id details 
 
 ```
 {
@@ -199,4 +200,108 @@ Policy 2: SSM Session Access (Attach to Roles) on EC2
 }
     ]
 }
+```
+## 👤 Linux OS Level Configuration
+Step 3: Create Linux Groups
+
+sudo groupadd devops
+sudo groupadd developer
+
+Step 4: Configure Sudo Permissions
+
+Create file: sudo nano /etc/sudoers.d/devops
+
+Add:
+
+%devops ALL=(ALL) ALL
+%devops ALL=(ALL) !/bin/rm -rf *
+
+Developer group has no sudo access.
+
+## ⚙️ Automatic User Provisioning Script
+
+Script Path:
+
+sudo nano /usr/local/bin/dynamic-ssm-user.sh
+
+add this and make it executable 
+
+```
+#!/bin/bash
+set -e  # Exit on error
+
+# Get IMDSv2 token
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+# Get instance ID
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/instance-id)
+
+------------------------------------------------------
+SESSION_ID=$(aws ssm describe-sessions \
+  --state Active \
+  --filters key=Target,value=$INSTANCE_ID \
+  --query "Sessions | sort_by(@,&StartDate)[-1].SessionId" \
+  --output text 2>/dev/null || echo "")
+
+# Get active SSM session owner (full ARN)
+IAM_ARN=$(aws ssm describe-sessions \
+  --state Active \
+  --filters key=Target,value=$INSTANCE_ID \
+  --query "Sessions | sort_by(@,&StartDate)[-1].Owner" \
+  --output text 2>/dev/null || echo "None")
+
+IAM_USER=$(echo "$IAM_ARN" | awk -F/ '{print $NF}')
+
+# If no valid IAM user, exit silently (stay as ssm-user)
+if [[ -z "$IAM_USER" || "$IAM_USER" == "None" || "$IAM_USER" == "null" ]]; then
+  exit 0
+fi
+
+# Create user if they don't exist
+if ! id "$IAM_USER" >/dev/null 2>&1; then
+  sudo useradd -m -s /bin/bash "$IAM_USER"
+
+  if [[ -d /home/ssm-user/.ssh ]]; then
+    sudo cp -r /home/ssm-user/.ssh /home/$IAM_USER/
+    sudo chown -R $IAM_USER:$IAM_USER /home/$IAM_USER/.ssh
+  fi
+fi
+
+# Extract role name from ARN and add user to appropriate group
+if [[ "$IAM_ARN" == *"DevOpsRole"* ]]; then
+  if ! getent group devops >/dev/null 2>&1; then
+    sudo groupadd devops
+    logger "Created devops group"
+  fi
+
+  if ! id -nG "$IAM_USER" | grep -qw devops; then
+    sudo usermod -aG devops "$IAM_USER"
+    logger "Added $IAM_USER to devops group (Role: DevOpsRole)"
+  fi
+
+elif [[ "$IAM_ARN" == *"DeveloperRole"* ]]; then
+  if ! getent group developer >/dev/null 2>&1; then
+    sudo groupadd developer
+    logger "Created developer group"
+  fi
+
+  if ! id -nG "$IAM_USER" | grep -qw developer; then
+    sudo usermod -aG developer "$IAM_USER"
+    logger "Added $IAM_USER to developer group (Role: DeveloperRole)"
+  fi
+fi
+
+logger "Switching SSM session from ssm-user to $IAM_USER"
+
+
+sudo -u "$IAM_USER" -i
+
+# When IAM user exits, this runs
+if [[ -n "$SESSION_ID" && "$SESSION_ID" != "None" ]]; then
+  aws ssm terminate-session --session-id "$SESSION_ID" >/dev/null 2>&1 || true
+fi
+
+exit 0
 ```
