@@ -391,56 +391,259 @@ Envoy now listening on port:
 Run:
 
 ```
-curl https://envoy.opstree.dev:808
+curl https://envoy.opstree.dev
 ```
 
-Flow:
+---
+## 8. How Routing Works (Simple Explanation)
 
-curl → Envoy:8080 → nginx:9000
-
-Envoy forwards request to nginx.
+This section explains how Envoy routes incoming client requests to the correct backend service based on **port, domain, and path**.
 
 ---
 
-# 8. How Routing Works (Simple Explanation)
+### Example 1: HTTP to HTTPS Redirect
 
-Example request:
+**Client Request:**
 
-Client:
+```
+http://pmm.opstree.dev
+```
 
-[http://localhost:8080](http://localhost:8080)
+**Step 1:**
 
-Step 1:
+Client sends HTTP request on port **80**
 
-Envoy listener receives request
+**Step 2:**
 
-Step 2:
+Envoy `listener_http_redirect` receives the request
+
+**Step 3:**
 
 Envoy checks route
 
+```
 prefix: /
+```
 
-Step 3:
+**Step 4:**
+
+Envoy redirects request to HTTPS
+
+```
+https://pmm.opstree.dev
+```
+
+---
+
+### Example 2: PMM Service Routing
+
+**Client Request:**
+
+```
+https://pmm.opstree.dev
+```
+
+**Step 1:**
+
+Envoy `listener_https` receives request on port **443**
+
+**Step 2:**
+
+Envoy checks domain
+
+```
+pmm.opstree.dev
+```
+
+**Step 3:**
 
 Envoy selects cluster
 
-nginx_cluster
+```
+pmm_cluster
+```
 
-Step 4:
+**Step 4:**
 
-Envoy forwards request to
+Envoy forwards request to backend
 
-127.0.0.1:9000
+```
+192.168.1.1:5601
+```
 
-Step 5:
+**Step 5:**
 
-nginx responds
+PMM service sends response
 
-Step 6:
+**Step 6:**
+
+Envoy returns response to client
+
+---
+
+### Example 3: OpenSearch Main UI Routing
+
+**Client Request:**
+
+```
+https://opensearch.opstree.dev/
+```
+
+**Step 1:**
+
+Envoy receives request on port **443**
+
+**Step 2:**
+
+Envoy checks domain
+
+```
+opensearch.opstree.dev
+```
+
+**Step 3:**
+
+Envoy matches route
+
+```
+prefix: /
+```
+
+**Step 4:**
+
+Envoy selects cluster
+
+```
+open_search
+```
+
+**Step 5:**
+
+Envoy forwards request to backend
+
+```
+192.168.8.188:5601
+```
+
+**Step 6:**
+
+OpenSearch responds
+
+**Step 7:**
 
 Envoy sends response back to client
 
 ---
+
+### Example 4: OpenSearch Metrics Routing
+
+**Client Request:**
+
+```
+https://opensearch.opstree.dev/metrics
+```
+
+**Step 1:**
+
+Envoy receives request
+
+**Step 2:**
+
+Envoy checks domain
+
+```
+opensearch.opstree.dev
+```
+
+**Step 3:**
+
+Envoy matches route
+
+```
+prefix: /metrics
+```
+
+**Step 4:**
+
+Envoy selects cluster
+
+```
+open_search_metrics
+```
+
+**Step 5:**
+
+Envoy forwards request to backend
+
+```
+192.168.8.188:9200
+```
+
+**Step 6:**
+
+Metrics service responds
+
+**Step 7:**
+
+Envoy sends response to client
+
+---
+
+### Example 5: Default Routing (Unknown Domain)
+
+**Client Request:**
+
+```
+https://unknown-domain.com
+```
+
+**Step 1:**
+
+Envoy receives request
+
+**Step 2:**
+
+Envoy matches default virtual host
+
+```
+domains: *
+```
+
+**Step 3:**
+
+Envoy selects default cluster
+
+```
+pmm_cluster
+```
+
+**Step 4:**
+
+Envoy forwards request
+
+```
+192.168.1.1:5601
+```
+
+**Step 5:**
+
+Envoy sends response back to client
+
+---
+
+### Summary Flow
+
+```
+Client → Listener → Virtual Host → Route → Cluster → Backend → Response → Client
+```
+
+Envoy uses:
+
+* **Listener** → accepts incoming connection
+* **Virtual Host** → matches domain
+* **Route** → matches path
+* **Cluster** → defines backend server
+* **Endpoint** → actual backend IP and port
 
 # 9. Which Server Envoy Runs On?
 
