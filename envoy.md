@@ -645,39 +645,8 @@ Envoy uses:
 * **Cluster** → defines backend server
 * **Endpoint** → actual backend IP and port
 
-# 9. Which Server Envoy Runs On?
-
-Envoy runs on proxy server.
-
-Example architecture:
-
-Client → Envoy Server → Backend Server
-
-Example real world:
-
-Server 1:
-Envoy running
-
-Server 2:
-nginx running
-
-Server 3:
-nodejs running
 
 Envoy routes traffic to correct server.
-
----
-
-# 10. Example Multiple Backend Routing
-
-Example:
-
-nginx1 → port 9000
-nginx2 → port 9001
-
-Envoy will load balance.
-
-Envoy automatically distributes traffic.
 
 ---
 
@@ -691,81 +660,5 @@ or use systemd service.
 
 ---
 
-# 12. Production Architecture
-
-Example:
-
-Internet
-↓
-Envoy
-↓
-Multiple backend servers
-
-Envoy handles:
-
-* Load balancing
-* Routing
-* Health checks
-* Security
-
----
-
-# 13. Real World Example
-
-Example:
-
-User opens:
-
-[www.example.com](http://www.example.com)
-
-Flow:
-
-User → Envoy → API server
-User → Envoy → Auth server
-User → Envoy → Web server
-
-Envoy decides where to send request.
-
----
-
-# 14. Important Commands
-
-Start Envoy:
-
-```
-envoy -c envoy.yaml
-```
-
-Check process:
-
-```
-ps aux | grep envoy
-```
-
-Stop Envoy:
-
-```
-pkill envoy
-```
-
----
-
-# 15. Summary
-
-Envoy is proxy server.
-
-It:
-
-Receives traffic
-Routes traffic
-Load balances traffic
-
-Envoy sits between client and backend.
-
-Client never talks directly to backend.
-
-Envoy controls everything.
-
----
 
 # End of Guide
