@@ -1,4 +1,4 @@
-# Envoy Proxy Step‑by‑Step Guide (Simple English)
+# Envoy Proxy Step‑by‑Step Guide 
 
 This guide explains Envoy Proxy from installation to running and routing traffic. It is written in simple English and practical steps.
 
